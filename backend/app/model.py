@@ -19,8 +19,21 @@ class IrrigationMLModel:
 
     def load_model(self):
         try:
-            if os.path.exists(self.path):
-                self.model = joblib.load(self.path)
+            candidate_paths = [
+                self.path,
+                os.path.abspath(os.path.join(os.getcwd(), "Farm_Irrigation_System.pkl")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "Farm_Irrigation_System.pkl")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "Farm_Irrigation_System.pkl")),
+                os.path.abspath(os.path.join(os.path.dirname(__file__), "Farm_Irrigation_System.pkl")),
+            ]
+            target_path = None
+            for p in candidate_paths:
+                if os.path.exists(p):
+                    target_path = p
+                    break
+
+            if target_path:
+                self.model = joblib.load(target_path)
                 # Cache feature importances per parcel
                 for i, est in enumerate(self.model.estimators_):
                     importances = est.feature_importances_
@@ -29,9 +42,9 @@ class IrrigationMLModel:
                         {"sensor": f"sensor_{idx}", "sensor_id": int(idx), "importance": float(round(importances[idx], 4))}
                         for idx in top_indices
                     ]
-                print(f"[ML Engine] Farm_Irrigation_System.pkl loaded successfully with 3 parcel estimators.")
+                print(f"[ML Engine] Farm_Irrigation_System.pkl loaded successfully from {target_path}")
             else:
-                print(f"[ML Engine] Warning: {self.path} not found.")
+                print(f"[ML Engine] Warning: Farm_Irrigation_System.pkl not found in candidates: {candidate_paths}")
         except Exception as e:
             print(f"[ML Engine] Error loading model: {e}")
 
